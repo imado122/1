@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Al Nasme — Syrian Luggage Factory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Noto+Kufi+Arabic:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --gold-dark: #8a6d2f;
+      --bg-deep: #0a0a0f;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.08);
+      --text-primary: #f0ece0;
+      --text-secondary: #a89880;
+      --glass: rgba(201,168,76,0.08);
+      --glass-border: rgba(201,168,76,0.2);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    [lang="ar"] body,
+    html[dir="rtl"] body { font-family: 'Noto Kufi Arabic', sans-serif; }
+
+    /* ── Canvas bg ── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: rgba(10,10,15,0.7);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      transition: all .3s ease;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 4px 20px rgba(201,168,76,0.4);
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .logo-en { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+    .logo-ar { font-family: 'Noto Kufi Arabic', sans-serif; font-size: .85rem; color: var(--text-secondary); }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: .9rem;
+      font-weight: 500;
+      letter-spacing: .05em;
+      transition: color .2s;
+    }
+
+    .nav-links a:hover { color: var(--gold); }
+
+    /* ── Language switcher ── */
+    .lang-switcher {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+
+    .flag-btn {
+      width: 38px; height: 28px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all .25s ease;
+      background: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      line-height: 1;
+      filter: brightness(0.7) saturate(0.8);
+    }
+
+    .flag-btn.active {
+      border-color: var(--gold);
+      filter: brightness(1) saturate(1);
+      box-shadow: 0 0 12px rgba(201,168,76,0.4);
+    }
+
+    .flag-btn:hover { filter: brightness(0.9) saturate(1); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 7rem 2rem 4rem;
+      overflow: hidden;
+    }
+
+    .hero-content { max-width: 820px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 50px;
+      padding: .4rem 1.2rem;
+      font-size: .78rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.8rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -.02em;
+      background: linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      text-shadow: none;
+    }
+
+    html[dir="rtl"] .hero-title {
+      font-family: 'Noto Kufi Arabic', sans-serif;
+      letter-spacing: 0;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      max-width: 580px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .85rem 2.2rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #0a0a0f;
+      font-weight: 700;
+      font-size: .95rem;
+      border-radius: 50px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all .3s ease;
+      box-shadow: 0 8px 32px rgba(201,168,76,0.35);
+      letter-spacing: .03em;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(201,168,76,0.5);
+    }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .85rem 2.2rem;
+      background: transparent;
+      color: var(--gold);
+      font-weight: 600;
+      font-size: .95rem;
+      border-radius: 50px;
+      text-decoration: none;
+      border: 1.5px solid var(--glass-border);
+      cursor: pointer;
+      transition: all .3s ease;
+    }
+
+    .btn-outline:hover {
+      background: var(--glass);
+      border-color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    /* ── 3D Luggage Scene ── */
+    .luggage-stage {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem 1rem;
+      perspective: 1000px;
+    }
+
+    .luggage-3d-wrap {
+      position: relative;
+      transform-style: preserve-3d;
+      animation: float3d 6s ease-in-out infinite;
+    }
+
+    @keyframes float3d {
+      0%, 100% { transform: rotateY(-12deg) rotateX(5deg) translateY(0px); }
+      50% { transform: rotateY(12deg) rotateX(-5deg) translateY(-20px); }
+    }
+
+    .luggage-set {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-end;
+      filter: drop-shadow(0 30px 60px rgba(201,168,76,0.2));
+    }
+
+    .bag {
+      position: relative;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #2a2418, #1a160e);
+      border: 2px solid rgba(201,168,76,0.3);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        0 20px 60px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(201,168,76,0.1);
+      transform-style: preserve-3d;
+      transition: transform .3s ease;
+    }
+
+    .bag::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 9px;
+      border: 1px solid rgba(201,168,76,0.15);
+    }
+
+    .bag::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 30%;
+      height: 8px;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-dark));
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 8px rgba(201,168,76,0.5);
+    }
+
+    .bag-sm { width: 90px; height: 110px; }
+    .bag-md { width: 110px; height: 140px; }
+    .bag-lg { width: 140px; height: 180px; }
+
+    .bag-stripe {
+      position: absolute;
+      left: 50%;
+      top: 15px; bottom: 15px;
+      width: 2px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, transparent, var(--gold-dark), var(--gold), var(--gold-dark), transparent);
+    }
+
+    .bag-handle {
+      position: absolute;
+      top: -16px; left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 14px;
+      border: 2px solid var(--gold);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 -2px 8px rgba(201,168,76,0.3);
+    }
+
+    .bag-wheel {
+      position: absolute;
+      bottom: -8px;
+      width: 16px; height: 10px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      border: 1px solid var(--gold-dark);
+    }
+    .bag-wheel.left { left: 12px; }
+    .bag-wheel.right { right: 12px; }
+
+    .bag-lock {
+      position: absolute;
+      bottom: 25px; left: 50%;
+      transform: translateX(-50%);
+      width: 18px; height: 14px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border-radius: 3px;
+      box-shadow: 0 2px 6px rgba(201,168,76,0.4);
+    }
+
+    .glow-ring {
+      position: absolute;
+      bottom: -40px; left: 50%;
+      transform: translateX(-50%);
+      width: 300px; height: 40px;
+      background: radial-gradient(ellipse, rgba(201,168,76,0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(8px);
+    }
+
+    /* ── Section base ── */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: .75rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 1.2rem;
+      background: linear-gradient(135deg, #fff, var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    html[dir="rtl"] .section-title { font-family: 'Noto Kufi Arabic', sans-serif; }
+
+    .section-desc {
+      color: var(--text-secondary);
+      line-height: 1.75;
+      max-width: 540px;
+    }
+
+    /* ── ABOUT ── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; gap: 3rem; } }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-top: 2.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      transition: all .3s ease;
+    }
+
+    .stat-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--gold);
+      transform: translateY(-4px);
+    }
+
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .stat-label { font-size: .8rem; color: var(--text-secondary); margin-top: .3rem; }
+
+    .about-visual {
+      position: relative;
+    }
+
+    .flag-display {
+      width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #0a0a0f, #1a160e);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 600px;
+      overflow: hidden;
+    }
+
+    .flag-3d {
+      font-size: 8rem;
+      animation: flagWave 4s ease-in-out infinite;
+      filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+    }
+
+    @keyframes flagWave {
+      0%, 100% { transform: rotateY(-10deg) scale(1); }
+      50% { transform: rotateY(10deg) scale(1.05); }
+    }
+
+    .syria-text {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%; transform: translateX(-50%);
+      font-family: 'Noto Kufi Arabic', sans-serif;
+      font-size: 1.1rem;
+      color: var(--gold);
+      white-space: nowrap;
+      letter-spacing: .1em;
+    }
+
+    /* ── PRODUCTS ── */
+    .products-section { background: rgba(201,168,76,0.02); }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      transition: all .4s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.05), transparent);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: var(--gold);
+      box-shadow: 0 20px 60px rgba(201,168,76,0.15);
+    }
+
+    .product-card:hover::before { opacity: 1; }
+
+    .product-icon {
+      font-size: 4rem;
+      margin-bottom: 1.2rem;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(201,168,76,0.3));
+      transition: transform .3s;
+    }
+
+    .product-card:hover .product-icon { transform: scale(1.15) translateY(-4px); }
+
+    .product-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: .5rem;
+    }
+
+    html[dir="rtl"] .product-name { font-family: 'Noto Kufi Arabic', sans-serif; }
+
+    .product-desc { font-size: .85rem; color: var(--text-secondary); line-height: 1.6; }
+
+    .product-badge {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: .3rem .9rem;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 50px;
+      font-size: .72rem;
+      color: var(--gold);
+      letter-spacing: .08em;
+    }
+
+    /* ── WHY ── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .why-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 2rem;
+      transition: all .3s ease;
+    }
+
+    .why-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(201,168,76,0.4);
+      transform: translateY(-4px);
+    }
+
+    .why-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .why-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: .5rem;
+    }
+
+    .why-desc { font-size: .85rem; color: var(--text-secondary); line-height: 1.65; }
+
+    /* ── CONTACT ── */
+    .contact-section {
+      background: linear-gradient(135deg, rgba(201,168,76,0.04), transparent);
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) { .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; } }
+
+    .contact-cards { display: flex; flex-direction: column; gap: 1rem; }
+
+    .contact-card {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.4rem 1.6rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all .3s ease;
+      cursor: pointer;
+    }
+
+    .contact-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--gold);
+      transform: translateX(6px);
+      box-shadow: 0 8px 30px rgba(201,168,76,0.1);
+    }
+
+    html[dir="rtl"] .contact-card:hover { transform: translateX(-6px); }
+
+    .contact-card-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .icon-email { background: linear-gradient(135deg, #4a90d9, #2c5aa0); }
+    .icon-whatsapp { background: linear-gradient(135deg, #25d366, #128c7e); }
+    .icon-phone { background: linear-gradient(135deg, #6c757d, #343a40); }
+    .icon-facebook { background: linear-gradient(135deg, #1877f2, #0d5fb5); }
+
+    .contact-card-text { flex: 1; min-width: 0; }
+    .contact-card-label { font-size: .72rem; color: var(--text-secondary); letter-spacing: .06em; text-transform: uppercase; margin-bottom: .15rem; }
+    .contact-card-value { font-size: .95rem; font-weight: 600; color: var(--text-primary); word-break: break-all; }
+
+    .contact-map-box {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .syria-showcase {
+      width: 100%;
+      aspect-ratio: 16/10;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0d1117, #1a0a0a);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .8rem;
+      border: 1px solid rgba(201,168,76,0.15);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .syria-showcase::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 30% 40%, rgba(201,168,76,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 70% 60%, rgba(201,0,0,0.05) 0%, transparent 50%);
+    }
+
+    .syria-big-flag { font-size: 5rem; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5)); }
+    .syria-location {
+      font-size: .9rem;
+      color: var(--gold);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .factory-tagline {
+      font-family: 'Noto Kufi Arabic', sans-serif;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+      font-size: .85rem;
+    }
+
+    footer .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--gold);
+      margin-bottom: .8rem;
+    }
+
+    html[dir="rtl"] footer .footer-logo { font-family: 'Noto Kufi Arabic', sans-serif; }
+
+    footer a { color: var(--gold); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Divider ── */
+    .gold-divider {
+      width: 60px; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      border-radius: 2px;
+      margin: 1.2rem 0;
+    }
+
+    /* ── Scroll reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RTL specific ── */
+    html[dir="rtl"] .nav-links { flex-direction: row-reverse; }
+    html[dir="rtl"] .section-desc { text-align: right; }
+    html[dir="rtl"] .hero-subtitle { text-align: center; }
+    html[dir="rtl"] .stat-label { text-align: right; }
+    html[dir="rtl"] .product-desc { text-align: center; }
+    html[dir="rtl"] .why-desc { text-align: right; }
+    html[dir="rtl"] .contact-card-value { text-align: right; }
+    html[dir="rtl"] .contact-card-label { text-align: right; }
+    html[dir="rtl"] .about-grid { direction: rtl; }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      nav { padding: 1rem 1.2rem; }
+      .nav-links { display: none; }
+      section { padding: 4rem 1.2rem; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── Particle trail ── */
+    .cursor-glow {
+      position: fixed;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      transform: translate(-50%, -50%);
+      transition: transform .1s linear;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon">🧳</div>
+    <div class="logo-text">
+      <span class="logo-en" data-en="Al Nasme" data-ar="النسمة">Al Nasme</span>
+      <span class="logo-ar" data-en="Syrian Luggage Factory" data-ar="مصنع الحقائب السورية">Syrian Luggage Factory</span>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#about" data-en="About" data-ar="من نحن">About</a></li>
+    <li><a href="#products" data-en="Products" data-ar="منتجاتنا">Products</a></li>
+    <li><a href="#why" data-en="Why Us" data-ar="لماذا نحن">Why Us</a></li>
+    <li><a href="#contact" data-en="Contact" data-ar="تواصل معنا">Contact</a></li>
+  </ul>
+  <div class="lang-switcher">
+    <button class="flag-btn active" id="btn-en" onclick="setLang('en')" title="English" aria-label="Switch to English">🇺🇸</button>
+    <button class="flag-btn" id="btn-ar" onclick="setLang('ar')" title="عربي" aria-label="التبديل إلى العربية">🇸🇾</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      🇸🇾 <span data-en="Made in Syria · Since 1985" data-ar="صُنع في سوريا · منذ ١٩٨٥">Made in Syria · Since 1985</span>
+    </div>
+    <h1 class="hero-title" data-en="Al Nasme" data-ar="النسمة">Al Nasme</h1>
+    <p class="hero-subtitle" data-en="Premium Syrian luggage crafted for every journey. From Damascus with pride — quality, elegance, and durability in every piece." data-ar="حقائب سورية فاخرة مصنوعة لكل رحلة. من دمشق بفخر — جودة وأناقة ومتانة في كل قطعة.">
+      Premium Syrian luggage crafted for every journey. From Damascus with pride — quality, elegance, and durability in every piece.
+    </p>
+    <div class="hero-btns">
+      <a href="#products" class="btn-primary" data-en="🧳 Explore Products" data-ar="🧳 استكشف المنتجات">🧳 Explore Products</a>
+      <a href="#contact" class="btn-outline" data-en="📞 Contact Us" data-ar="📞 تواصل معنا">📞 Contact Us</a>
+    </div>
+  </div>
+</section>
+
+<!-- 3D LUGGAGE SHOWCASE -->
+<div class="luggage-stage">
+  <div class="luggage-3d-wrap">
+    <div class="luggage-set">
+      <div class="bag bag-sm">
+        <div class="bag-handle"></div>
+        <div class="bag-stripe"></div>
+        <div class="bag-lock"></div>
+        <div class="bag-wheel left"></div>
+        <div class="bag-wheel right"></div>
+      </div>
+      <div class="bag bag-lg">
+        <div class="bag-handle"></div>
+        <div class="bag-stripe"></div>
+        <div class="bag-lock"></div>
+        <div class="bag-wheel left"></div>
+        <div class="bag-wheel right"></div>
+      </div>
+      <div class="bag bag-md">
+        <div class="bag-handle"></div>
+        <div class="bag-stripe"></div>
+        <div class="bag-lock"></div>
+        <div class="bag-wheel left"></div>
+        <div class="bag-wheel right"></div>
+      </div>
+    </div>
+    <div class="glow-ring"></div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid reveal">
+      <div>
+        <p class="section-label" data-en="Our Story" data-ar="قصتنا">Our Story</p>
+        <h2 class="section-title" data-en="A Syrian Legacy of Craftsmanship" data-ar="إرث سوري في الحرفية">A Syrian Legacy of Craftsmanship</h2>
+        <div class="gold-divider"></div>
+        <p class="section-desc" data-en="Al Nasme has been Syria's trusted luggage manufacturer for decades. Our factory combines traditional Syrian craftsmanship with modern manufacturing to produce premium bags and suitcases that travel the world." data-ar="النسمة هي الشركة السورية الموثوقة في تصنيع الحقائب منذ عقود. يجمع مصنعنا بين الحرف اليدوية السورية التقليدية والتصنيع الحديث لإنتاج حقائب وأمتعة فاخرة تسافر حول العالم.">
+          Al Nasme has been Syria's trusted luggage manufacturer for decades. Our factory combines traditional Syrian craftsmanship with modern manufacturing to produce premium bags and suitcases that travel the world.
+        </p>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-num">40+</div>
+            <div class="stat-label" data-en="Years of Excellence" data-ar="عاماً من التميز">Years of Excellence</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">50k+</div>
+            <div class="stat-label" data-en="Pieces Produced" data-ar="قطعة تم إنتاجها">Pieces Produced</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">20+</div>
+            <div class="stat-label" data-en="Product Variants" data-ar="متنوعات المنتجات">Product Variants</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">🇸🇾</div>
+            <div class="stat-label" data-en="Proudly Syrian" data-ar="بفخر سوري">Proudly Syrian</div>
+          </div>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="flag-display">
+          <div class="flag-3d">🇸🇾</div>
+        </div>
+        <div class="syria-text" data-en="Damascus · Syria" data-ar="دمشق · سوريا">Damascus · Syria</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section id="products" class="products-section">
+  <div class="container">
+    <div class="reveal" style="text-align:center; margin-bottom:1rem;">
+      <p class="section-label" data-en="What We Make" data-ar="ما نصنعه">What We Make</p>
+      <h2 class="section-title" data-en="Our Product Range" data-ar="مجموعة منتجاتنا">Our Product Range</h2>
+    </div>
+    <div class="products-grid reveal">
+      <div class="product-card">
+        <span class="product-icon">🧳</span>
+        <div class="product-name" data-en="Hard Shell Suitcases" data-ar="حقائب صلبة">Hard Shell Suitcases</div>
+        <div class="product-desc" data-en="Durable ABS hard-shell suitcases in small, medium & large — built for long-haul travel." data-ar="حقائب صلبة ABS متينة بأحجام صغيرة ومتوسطة وكبيرة — مصممة للسفر الطويل.">Durable ABS hard-shell suitcases in small, medium & large — built for long-haul travel.</div>
+        <span class="product-badge" data-en="Best Seller" data-ar="الأكثر مبيعاً">Best Seller</span>
+      </div>
+      <div class="product-card">
+        <span class="product-icon">👜</span>
+        <div class="product-name" data-en="Soft Fabric Bags" data-ar="حقائب قماشية ناعمة">Soft Fabric Bags</div>
+        <div class="product-desc" data-en="Lightweight nylon and polyester travel bags with multiple compartments and ergonomic handles." data-ar="حقائب سفر خفيفة الوزن من النايلون والبوليستر مع جيوب متعددة ومقابض مريحة.">Lightweight nylon and polyester travel bags with multiple compartments and ergonomic handles.</div>
+        <span class="product-badge" data-en="Lightweight" data-ar="خفيفة الوزن">Lightweight</span>
+      </div>
+      <div class="product-card">
+        <span class="product-icon">🎒</span>
+        <div class="product-name" data-en="Travel Backpacks" data-ar="حقائب ظهر للسفر">Travel Backpacks</div>
+        <div class="product-desc" data-en="Premium travel backpacks with laptop compartments, USB ports & ergonomic back support." data-ar="حقائب ظهر فاخرة للسفر مع حجرة لابتوب ومنافذ USB ودعم ظهر مريح.">Premium travel backpacks with laptop compartments, USB ports & ergonomic back support.</div>
+        <span class="product-badge" data-en="Modern" data-ar="عصري">Modern</span>
+      </div>
+      <div class="product-card">
+        <span class="product-icon">💼</span>
+        <div class="product-name" data-en="Business Briefcases" data-ar="حقائب أعمال">Business Briefcases</div>
+        <div class="product-desc" data-en="Executive leather-finish briefcases. Perfect for professionals who demand style and function." data-ar="حقائب أعمال فاخرة بتشطيب جلدي. مثالية للمحترفين الذين يطالبون بالأناقة والوظيفية.">Executive leather-finish briefcases. Perfect for professionals who demand style and function.</div>
+        <span class="product-badge" data-en="Executive" data-ar="تنفيذي">Executive</span>
+      </div>
+      <div class="product-card">
+        <span class="product-icon">🏕️</span>
+        <div class="product-name" data-en="Duffel & Sport Bags" data-ar="حقائب رياضية">Duffel & Sport Bags</div>
+        <div class="product-desc" data-en="Large-capacity duffel bags for sports, gym, and weekend getaways. Rugged and spacious." data-ar="حقائب كبيرة الحجم للرياضة والنادي ورحلات نهاية الأسبوع. متينة وواسعة.">Large-capacity duffel bags for sports, gym, and weekend getaways. Rugged and spacious.</div>
+        <span class="product-badge" data-en="High Capacity" data-ar="سعة عالية">High Capacity</span>
+      </div>
+      <div class="product-card">
+        <span class="product-icon">🏭</span>
+        <div class="product-name" data-en="Wholesale & Custom" data-ar="الجملة والتخصيص">Wholesale & Custom</div>
+        <div class="product-desc" data-en="Bulk orders with custom branding, colours and designs. Factory-direct pricing for businesses." data-ar="طلبات بالجملة مع علامة تجارية وألوان وتصاميم مخصصة. أسعار مباشرة من المصنع للشركات.">Bulk orders with custom branding, colours and designs. Factory-direct pricing for businesses.</div>
+        <span class="product-badge" data-en="Factory Direct" data-ar="مباشر من المصنع">Factory Direct</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section id="why">
+  <div class="container">
+    <div class="reveal" style="text-align:center;">
+      <p class="section-label" data-en="Why Choose Al Nasme" data-ar="لماذا تختار النسمة">Why Choose Al Nasme</p>
+      <h2 class="section-title" data-en="Built Different" data-ar="مختلفون في الجوهر">Built Different</h2>
+    </div>
+    <div class="why-grid reveal">
+      <div class="why-card">
+        <div class="why-icon">🏆</div>
+        <div class="why-title" data-en="Factory Quality" data-ar="جودة المصنع">Factory Quality</div>
+        <div class="why-desc" data-en="Every piece is manufactured and inspected in our Syrian factory ensuring consistent, high-grade output." data-ar="كل قطعة تُصنَّع وتُفحص في مصنعنا السوري لضمان إنتاج عالي الجودة ومتسق.">Every piece is manufactured and inspected in our Syrian factory ensuring consistent, high-grade output.</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">💰</div>
+        <div class="why-title" data-en="Competitive Pricing" data-ar="أسعار تنافسية">Competitive Pricing</div>
+        <div class="why-desc" data-en="Factory-direct means no middlemen. You get premium luggage at unbeatable prices, especially for wholesale." data-ar="مباشر من المصنع يعني لا وسطاء. تحصل على حقائب فاخرة بأسعار لا تُضاهى، خاصةً للجملة.">Factory-direct means no middlemen. You get premium luggage at unbeatable prices, especially for wholesale.</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🎨</div>
+        <div class="why-title" data-en="Custom Designs" data-ar="تصاميم مخصصة">Custom Designs</div>
+        <div class="why-desc" data-en="We work with your brand. Custom colours, logos, and designs are available for bulk orders." data-ar="نعمل مع علامتك التجارية. الألوان والشعارات والتصاميم المخصصة متاحة للطلبات بالجملة.">We work with your brand. Custom colours, logos, and designs are available for bulk orders.</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🛡️</div>
+        <div class="why-title" data-en="Durability Guaranteed" data-ar="المتانة مضمونة">Durability Guaranteed</div>
+        <div class="why-desc" data-en="Our materials are tested for strength and longevity. Built to last through countless journeys." data-ar="موادنا مُختبرة للقوة والمتانة. مصنوعة لتدوم عبر رحلات لا تُعد ولا تُحصى.">Our materials are tested for strength and longevity. Built to last through countless journeys.</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🚀</div>
+        <div class="why-title" data-en="Fast Turnaround" data-ar="تسليم سريع">Fast Turnaround</div>
+        <div class="why-desc" data-en="Efficient production lines mean your order is fulfilled quickly — even for large wholesale quantities." data-ar="خطوط إنتاج فعالة تعني تنفيذ طلبك بسرعة — حتى للكميات الكبيرة بالجملة.">Efficient production lines mean your order is fulfilled quickly — even for large wholesale quantities.</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🤝</div>
+        <div class="why-title" data-en="Trusted Since 1985" data-ar="موثوق منذ ١٩٨٥">Trusted Since 1985</div>
+        <div class="why-desc" data-en="Four decades of trust. Our reputation is built on honest business, fair pricing, and great products." data-ar="أربعة عقود من الثقة. سمعتنا مبنية على الأعمال الصادقة والأسعار العادلة والمنتجات الرائعة.">Four decades of trust. Our reputation is built on honest business, fair pricing, and great products.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="contact-section">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label" data-en="Get In Touch" data-ar="تواصل معنا">Get In Touch</p>
+      <h2 class="section-title" data-en="Contact Al Nasme" data-ar="تواصل مع النسمة">Contact Al Nasme</h2>
+      <div class="gold-divider"></div>
+      <p class="section-desc" data-en="Ready to order or want to learn more? Reach us by phone, WhatsApp, email, or Facebook." data-ar="هل أنت مستعد للطلب أو تريد معرفة المزيد؟ تواصل معنا عبر الهاتف أو واتساب أو البريد الإلكتروني أو فيسبوك.">
+        Ready to order or want to learn more? Reach us by phone, WhatsApp, email, or Facebook.
+      </p>
+    </div>
+    <div class="contact-grid reveal">
+      <div class="contact-cards">
+        <a class="contact-card" href="mailto:were.aksle@outlook.com">
+          <div class="contact-card-icon icon-email">✉️</div>
+          <div class="contact-card-text">
+            <div class="contact-card-label" data-en="Email" data-ar="البريد الإلكتروني">Email</div>
+            <div class="contact-card-value">were.aksle@outlook.com</div>
+          </div>
+        </a>
+        <a class="contact-card" href="https://wa.me/963983541883" target="_blank" rel="noopener">
+          <div class="contact-card-icon icon-whatsapp">💬</div>
+          <div class="contact-card-text">
+            <div class="contact-card-label" data-en="WhatsApp & International Calls" data-ar="واتساب ومكالمات دولية">WhatsApp & International Calls</div>
+            <div class="contact-card-value" dir="ltr">+963 983 541 883</div>
+          </div>
+        </a>
+        <a class="contact-card" href="tel:+963933317425">
+          <div class="contact-card-icon icon-phone">📞</div>
+          <div class="contact-card-text">
+            <div class="contact-card-label" data-en="Calls (Syria Only)" data-ar="مكالمات (سوريا فقط)">Calls (Syria Only)</div>
+            <div class="contact-card-value" dir="ltr">+963 933 317 425</div>
+          </div>
+        </a>
+        <a class="contact-card" href="https://www.facebook.com/share/1NegC3Qbih/" target="_blank" rel="noopener">
+          <div class="contact-card-icon icon-facebook">📘</div>
+          <div class="contact-card-text">
+            <div class="contact-card-label" data-en="Facebook Page" data-ar="صفحة فيسبوك">Facebook Page</div>
+            <div class="contact-card-value" data-en="Al Nasme on Facebook" data-ar="النسمة على فيسبوك">Al Nasme on Facebook</div>
+          </div>
+        </a>
+      </div>
+      <div class="contact-map-box">
+        <div class="syria-showcase">
+          <div class="syria-big-flag">🇸🇾</div>
+          <div class="syria-location" data-en="Damascus · Syria" data-ar="دمشق · سوريا">Damascus · Syria</div>
+        </div>
+        <div class="factory-tagline" data-en="Proudly manufacturing in Syria — serving customers worldwide." data-ar="نصنع بفخر في سوريا — نخدم العملاء في جميع أنحاء العالم.">
+          Proudly manufacturing in Syria — serving customers worldwide.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo" data-en="Al Nasme" data-ar="النسمة">Al Nasme</div>
+  <p data-en="Syrian Luggage Factory · Damascus, Syria 🇸🇾" data-ar="مصنع الحقائب السورية · دمشق، سوريا 🇸🇾">Syrian Luggage Factory · Damascus, Syria 🇸🇾</p>
+  <br />
+  <p>
+    <a href="mailto:were.aksle@outlook.com">were.aksle@outlook.com</a> ·
+    <a href="https://wa.me/963983541883">+963 983 541 883</a> ·
+    <a href="https://www.facebook.com/share/1NegC3Qbih/" target="_blank" rel="noopener" data-en="Facebook" data-ar="فيسبوك">Facebook</a>
+  </p>
+  <br />
+  <p style="font-size:.75rem; opacity:.5;" data-en="© 2025 Al Nasme · All rights reserved" data-ar="© ٢٠٢٥ النسمة · جميع الحقوق محفوظة">© 2025 Al Nasme · All rights reserved</p>
+</footer>
+
+<script>
+  /* ══ Language Switcher ══ */
+  function setLang(lang) {
+    const html = document.documentElement;
+    html.setAttribute('lang', lang);
+    html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const val = el.getAttribute('data-' + lang);
+      if (val) el.textContent = val;
+    });
+
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-ar').classList.toggle('active', lang === 'ar');
+
+    // Update page title
+    document.title = lang === 'ar' ? 'النسمة — مصنع الحقائب السورية' : 'Al Nasme — Syrian Luggage Factory';
+  }
+
+  /* ══ Three.js particle background ══ */
+  (function() {
+    const canvas = document.getElementById('bg-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 80;
+
+    // Particles
+    const count = 1800;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    const col = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      pos[i * 3]     = (Math.random() - 0.5) * 300;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 300;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 200;
+
+      // Gold-ish tones
+      const brightness = 0.3 + Math.random() * 0.7;
+      col[i * 3]     = brightness * 0.79;  // R
+      col[i * 3 + 1] = brightness * 0.66;  // G
+      col[i * 3 + 2] = brightness * 0.3;   // B
+    }
+
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+
+    const mat = new THREE.PointsMaterial({
+      size: 0.6,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.7,
+      sizeAttenuation: true,
+    });
+
+    const points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    // Animate
+    let frame = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      frame++;
+      points.rotation.y = frame * 0.0004;
+      points.rotation.x = Math.sin(frame * 0.0002) * 0.1;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  })();
+
+  /* ══ Cursor glow ══ */
+  const glow = document.getElementById('cursorGlow');
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top  = e.clientY + 'px';
+  });
+
+  /* ══ Scroll reveal ══ */
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  /* ══ Nav shadow on scroll ══ */
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    nav.style.boxShadow = window.scrollY > 20
+      ? '0 8px 40px rgba(0,0,0,0.5)'
+      : 'none';
+  });
+</script>
+</body>
+</html>
