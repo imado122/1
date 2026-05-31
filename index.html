@@ -33,6 +33,7 @@
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;700&display=swap" rel="stylesheet" />
@@ -379,29 +380,25 @@
       </a>
     </div>
 
-    <!-- 3D Luggage set -->
-    <div class="luggage-wrap reveal reveal-delay-5">
-      <div class="luggage-set flex items-end gap-6 justify-center">
-        <!-- Small -->
-        <div class="bag w-[82px] h-[104px]" style="background:linear-gradient(145deg,#292524,#1C1917)">
-          <div class="bag-handle"></div><div class="bag-stripe"></div>
-          <div class="bag-lock"></div>
-          <div class="bag-wheel left-2"></div><div class="bag-wheel right-2"></div>
+    <!-- Three.js 3D Luggage (with CSS fallback) -->
+    <div id="luggage-wrap" class="reveal reveal-delay-5" style="width:100%;max-width:680px;height:420px;position:relative;">
+      <canvas id="luggage-canvas" style="width:100%;height:100%;display:block;cursor:grab;border-radius:16px;"></canvas>
+      <!-- CSS fallback — shown only if WebGL unavailable -->
+      <div id="luggage-fallback" style="display:none;width:100%;height:100%;align-items:flex-end;justify-content:center;gap:1.5rem;">
+        <div style="width:82px;height:104px;background:linear-gradient(145deg,#292524,#1C1917);border-radius:14px;position:relative;box-shadow:0 28px 72px rgba(0,0,0,.75)">
+          <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:38%;height:13px;border:2px solid #CA8A04;border-bottom:none;border-radius:7px 7px 0 0"></div>
+          <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:15px;height:12px;background:linear-gradient(135deg,#E8C97A,#A16207);border-radius:3px"></div>
         </div>
-        <!-- Large (center) -->
-        <div class="bag w-[130px] h-[168px]" style="background:linear-gradient(145deg,#3D2E0A,#1C1206)">
-          <div class="bag-handle"></div><div class="bag-stripe"></div>
-          <div class="bag-lock"></div>
-          <div class="bag-wheel left-3"></div><div class="bag-wheel right-3"></div>
+        <div style="width:130px;height:168px;background:linear-gradient(145deg,#3D2E0A,#1C1206);border-radius:14px;position:relative;box-shadow:0 28px 72px rgba(0,0,0,.75);animation:float3d 7s ease-in-out infinite">
+          <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:38%;height:13px;border:2px solid #CA8A04;border-bottom:none;border-radius:7px 7px 0 0"></div>
+          <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:15px;height:12px;background:linear-gradient(135deg,#E8C97A,#A16207);border-radius:3px"></div>
         </div>
-        <!-- Medium -->
-        <div class="bag w-[104px] h-[132px]" style="background:linear-gradient(145deg,#292524,#1C1917)">
-          <div class="bag-handle"></div><div class="bag-stripe"></div>
-          <div class="bag-lock"></div>
-          <div class="bag-wheel left-2"></div><div class="bag-wheel right-2"></div>
+        <div style="width:104px;height:132px;background:linear-gradient(145deg,#292524,#1C1917);border-radius:14px;position:relative;box-shadow:0 28px 72px rgba(0,0,0,.75)">
+          <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:38%;height:13px;border:2px solid #CA8A04;border-bottom:none;border-radius:7px 7px 0 0"></div>
+          <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:15px;height:12px;background:linear-gradient(135deg,#E8C97A,#A16207);border-radius:3px"></div>
         </div>
       </div>
-      <div class="shadow-glow"></div>
+      <p id="luggage-hint" class="absolute bottom-2 left-0 right-0 text-center font-sans text-[0.62rem] text-muted/40 select-none pointer-events-none" data-en="Drag to rotate" data-ar="اسحب للتدوير">Drag to rotate</p>
     </div>
 
     <!-- Scroll cue -->
@@ -843,6 +840,303 @@
      aria-label="Order on WhatsApp">
     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
   </a>
+
+  <!-- ══════════ THREE.JS 3D LUGGAGE SCENE ══════════ -->
+  <script type="module">
+  import * as THREE from 'three';
+  (function initThreeScene() {
+    const canvas = document.getElementById('luggage-canvas');
+    if (!canvas) return;
+
+    /* ── WebGL availability check ── */
+    function hasWebGL() {
+      try {
+        const ctx = document.createElement('canvas').getContext('webgl2') ||
+                    document.createElement('canvas').getContext('webgl') ||
+                    document.createElement('canvas').getContext('experimental-webgl');
+        return !!ctx;
+      } catch(e) { return false; }
+    }
+    if (!hasWebGL()) {
+      canvas.style.display = 'none';
+      const fb = document.getElementById('luggage-fallback');
+      if (fb) fb.style.display = 'flex';
+      const hint = document.getElementById('luggage-hint');
+      if (hint) hint.style.display = 'none';
+      return;
+    }
+
+    const wrap = document.getElementById('luggage-wrap');
+    let W = wrap.offsetWidth, H = wrap.offsetHeight;
+
+    /* ── Renderer ── */
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.3;
+
+    /* ── Scene & Camera ── */
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 100);
+    camera.position.set(0, 0.4, 6.2);
+    camera.lookAt(0, 0, 0);
+
+    /* ── Lights ── */
+    // Warm ambient
+    scene.add(new THREE.AmbientLight(0x2a1a06, 2.8));
+
+    // Main sun (warm gold, from upper-left)
+    const sun = new THREE.DirectionalLight(0xF0D070, 3.5);
+    sun.position.set(-3, 5, 4);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 25;
+    sun.shadow.camera.left = -5;
+    sun.shadow.camera.right = 5;
+    sun.shadow.camera.top = 5;
+    sun.shadow.camera.bottom = -5;
+    sun.shadow.bias = -0.001;
+    scene.add(sun);
+
+    // Gold fill from lower-front-right
+    const fill = new THREE.PointLight(0xCA8A04, 6, 9);
+    fill.position.set(3, -1.5, 5);
+    scene.add(fill);
+
+    // Cool rim from back-left (adds depth)
+    const rim = new THREE.PointLight(0x4466BB, 2.5, 7);
+    rim.position.set(-3, 2.5, -4);
+    scene.add(rim);
+
+    // Warm ground bounce
+    const bounce = new THREE.PointLight(0x8B5E04, 2, 6);
+    bounce.position.set(0, -4, 2);
+    scene.add(bounce);
+
+    /* ── Materials ── */
+    function bodyMat(hex) {
+      return new THREE.MeshPhysicalMaterial({
+        color: hex,
+        roughness: 0.18,
+        metalness: 0.72,
+        clearcoat: 0.9,
+        clearcoatRoughness: 0.08,
+        reflectivity: 0.95,
+      });
+    }
+    const goldMat = new THREE.MeshPhysicalMaterial({
+      color: 0xD4960A,
+      roughness: 0.06,
+      metalness: 1.0,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.04,
+    });
+    const brightGoldMat = new THREE.MeshPhysicalMaterial({
+      color: 0xF0C020,
+      roughness: 0.04,
+      metalness: 1.0,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.02,
+    });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.65, metalness: 0.4 });
+    const zipMat  = new THREE.MeshStandardMaterial({ color: 0x3A2E28, roughness: 0.85, metalness: 0.15 });
+    const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.35 });
+
+    /* ── Suitcase builder ── */
+    function makeSuitcase(w, h, d, color) {
+      const g = new THREE.Group();
+
+      // Body
+      const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bodyMat(color));
+      body.castShadow = true; body.receiveShadow = true;
+      g.add(body);
+
+      // Horizontal ribs (3)
+      [-0.28, 0, 0.28].forEach(yFrac => {
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(w + 0.018, 0.028, d + 0.018), goldMat);
+        rib.position.y = yFrac * h;
+        g.add(rib);
+      });
+
+      // Vertical zipper line (front face)
+      const zip = new THREE.Mesh(new THREE.BoxGeometry(0.016, h * 0.93, 0.016), zipMat);
+      zip.position.z = d / 2 + 0.008;
+      g.add(zip);
+
+      // Handle posts (two uprights + crossbar)
+      const postH = 0.13;
+      [-w * 0.16, w * 0.16].forEach(px => {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, postH, 10), goldMat);
+        post.position.set(px, h / 2 + postH / 2, 0);
+        g.add(post);
+      });
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(w * 0.36, 0.038, 0.038), goldMat);
+      bar.position.y = h / 2 + postH;
+      g.add(bar);
+
+      // Lock body
+      const lock = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.075, 0.03), brightGoldMat);
+      lock.position.set(0, -h * 0.22, d / 2 + 0.016);
+      g.add(lock);
+      // Lock shackle
+      const shackle = new THREE.Mesh(
+        new THREE.TorusGeometry(0.028, 0.012, 8, 16, Math.PI),
+        brightGoldMat
+      );
+      shackle.position.set(0, -h * 0.22 + 0.055, d / 2 + 0.016);
+      shackle.rotation.x = Math.PI / 2;
+      g.add(shackle);
+
+      // Wheels (4 corners)
+      const wGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.04, 14);
+      const wx = w / 2 - 0.09;
+      const wy = -h / 2 - 0.056;
+      [[wx, -d/2+0.07], [-wx, -d/2+0.07], [wx, d/2-0.07], [-wx, d/2-0.07]].forEach(([x, z]) => {
+        const wh = new THREE.Mesh(wGeo, wheelMat);
+        wh.rotation.z = Math.PI / 2;
+        wh.position.set(x, wy, z);
+        wh.castShadow = true;
+        g.add(wh);
+      });
+
+      // Corner protectors (4 vertical edges, front face)
+      const cgGeo = new THREE.BoxGeometry(0.06, h + 0.02, 0.06);
+      [[-w/2, d/2], [w/2, d/2]].forEach(([x, z]) => {
+        const cg = new THREE.Mesh(cgGeo, goldMat);
+        cg.position.set(x, 0, z);
+        g.add(cg);
+      });
+      // Top horizontal edge guards
+      const hEdgeGeo = new THREE.BoxGeometry(w + 0.04, 0.055, 0.055);
+      [h/2, -h/2].forEach(y => {
+        const he = new THREE.Mesh(hEdgeGeo, goldMat);
+        he.position.set(0, y, d/2);
+        g.add(he);
+      });
+
+      return g;
+    }
+
+    /* ── Create 3 suitcases ── */
+    const small  = makeSuitcase(0.60, 0.82, 0.29, 0x18130E);
+    const large  = makeSuitcase(0.80, 1.14, 0.36, 0x3A2504);
+    const medium = makeSuitcase(0.68, 0.96, 0.31, 0x18130E);
+
+    small.position.set(-1.38, -0.18, 0.1);
+    large.position.set( 0,     0.10, 0.25);
+    medium.position.set( 1.34, -0.10, 0.1);
+
+    const mainGroup = new THREE.Group();
+    mainGroup.add(small, large, medium);
+    scene.add(mainGroup);
+
+    /* ── Shadow plane ── */
+    const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), shadowPlaneMat);
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.position.y = -0.78;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    /* ── Gold dust particles ── */
+    const pCount = 100;
+    const pPos = new Float32Array(pCount * 3);
+    const pSpeeds = new Float32Array(pCount);
+    for (let i = 0; i < pCount; i++) {
+      pPos[i*3]   = (Math.random() - 0.5) * 9;
+      pPos[i*3+1] = (Math.random() - 0.5) * 6;
+      pPos[i*3+2] = (Math.random() - 0.5) * 5;
+      pSpeeds[i]  = 0.2 + Math.random() * 0.6;
+    }
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos.slice(), 3));
+    const pMat = new THREE.PointsMaterial({ color: 0xE8C97A, size: 0.055, transparent: true, opacity: 0.55, sizeAttenuation: true });
+    const particles = new THREE.Points(pGeo, pMat);
+    scene.add(particles);
+
+    /* ── Mouse / touch drag ── */
+    let isDragging = false, prevX = 0, prevY = 0;
+    let dragRotY = 0, dragRotX = 0;
+    let velY = 0, velX = 0;
+    let mouseNX = 0, mouseNY = 0;
+
+    canvas.addEventListener('mousedown', e => {
+      isDragging = true; prevX = e.clientX; prevY = e.clientY;
+      canvas.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; canvas.style.cursor = 'grab'; });
+    window.addEventListener('mousemove', e => {
+      mouseNX = (e.clientX / window.innerWidth - 0.5);
+      mouseNY = -(e.clientY / window.innerHeight - 0.5);
+      if (isDragging) {
+        velY += (e.clientX - prevX) * 0.012;
+        velX += (e.clientY - prevY) * 0.006;
+        prevX = e.clientX; prevY = e.clientY;
+      }
+    });
+    // Touch
+    canvas.addEventListener('touchstart', e => {
+      isDragging = true;
+      prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+    }, { passive: true });
+    canvas.addEventListener('touchend', () => { isDragging = false; });
+    canvas.addEventListener('touchmove', e => {
+      if (isDragging) {
+        velY += (e.touches[0].clientX - prevX) * 0.012;
+        velX += (e.touches[0].clientY - prevY) * 0.006;
+        prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    /* ── Resize ── */
+    function onResize() {
+      W = wrap.offsetWidth; H = wrap.offsetHeight;
+      renderer.setSize(W, H);
+      camera.aspect = W / H;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', onResize);
+
+    /* ── Animate ── */
+    let clock = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.016;
+
+      // Inertia on drag rotation
+      dragRotY += velY; velY *= 0.88;
+      dragRotX += velX; velX *= 0.88;
+      dragRotX = Math.max(-0.55, Math.min(0.55, dragRotX));
+
+      // Individual float (each suitcase at different phase)
+      small.position.y  = -0.18 + Math.sin(clock * 0.75 + 0.0) * 0.09;
+      large.position.y  =  0.10 + Math.sin(clock * 0.75 + 1.1) * 0.11;
+      medium.position.y = -0.10 + Math.sin(clock * 0.75 + 2.3) * 0.09;
+
+      // Gentle sway on each bag
+      small.rotation.z  = Math.sin(clock * 0.5 + 0.0) * 0.025;
+      large.rotation.z  = Math.sin(clock * 0.5 + 1.1) * 0.018;
+      medium.rotation.z = Math.sin(clock * 0.5 + 2.3) * 0.025;
+
+      // Group rotation: drag + mouse parallax + slow auto-drift
+      mainGroup.rotation.y = dragRotY + mouseNX * 0.22 + Math.sin(clock * 0.10) * 0.06;
+      mainGroup.rotation.x = dragRotX + mouseNY * 0.10;
+
+      // Particles drift slowly
+      particles.rotation.y = clock * 0.045;
+      particles.rotation.x = clock * 0.018;
+
+      // Pulse fill light
+      fill.intensity = 5.5 + Math.sin(clock * 1.3) * 0.7;
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  })();
+  </script>
 
   <script>
     /* ── Scroll progress bar ── */
